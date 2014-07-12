@@ -10,14 +10,14 @@ namespace CSharp.oDesk.Console_Example
     class Program
     {
         // Set your consumer key & secret here
-        private const string oDeskApiKey = "ENTER YOUR KEY HERE";
-        private const string oDeskApiSecret = "ENTER YOUR SECRET HERE";
+        private const string ODeskApiKey = "ENTER YOUR KEY HERE";
+        private const string ODeskApiSecret = "ENTER YOUR SECRET HERE";
 
-        private static void Main(string[] args)
+        private static void Main()
         {
             try
             {
-                var oDeskServiceProvider = new oDeskServiceProvider(oDeskApiKey, oDeskApiSecret);
+                var oDeskServiceProvider = new oDeskServiceProvider(ODeskApiKey, ODeskApiSecret);
 
                 /* OAuth 'dance' */
 

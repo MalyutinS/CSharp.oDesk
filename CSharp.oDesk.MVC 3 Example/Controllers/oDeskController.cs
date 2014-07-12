@@ -12,10 +12,10 @@ namespace CSharp.oDesk.MVC_3_Example.Controllers
         private const string CallbackUrl = "http://localhost:14915/oDesk/Callback";
 
         // Set your consumer key & secret here
-        private const string oDeskApiKey = "ENTER YOUR KEY HERE";
-        private const string oDeskApiSecret = "ENTER YOUR SECRET HERE";
+        private const string ODeskApiKey = "ENTER YOUR KEY HERE";
+        private const string ODeskApiSecret = "ENTER YOUR SECRET HERE";
 
-        readonly IOAuth1ServiceProvider<IoDesk> _oDeskProvider = new oDeskServiceProvider(oDeskApiKey, oDeskApiSecret);
+        readonly IOAuth1ServiceProvider<IoDesk> _oDeskProvider = new oDeskServiceProvider(ODeskApiKey, ODeskApiSecret);
 
         public ActionResult Index()
         {
