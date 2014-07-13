@@ -8,8 +8,8 @@
     <ProjectGuid>{A59AAED3-BD15-4042-A9A4-7046C571CFE6}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CSharp.oDesk.Console_Example</RootNamespace>
-    <AssemblyName>CSharp.oDesk.Console Example</AssemblyName>
+    <RootNamespace>CSharp.oDesk.JobsSearch</RootNamespace>
+    <AssemblyName>CSharp.oDesk.JobsSearch</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -38,6 +38,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Common.Logging.2.1.1\lib\net40\Common.Logging.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.6.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Spring.Rest, Version=1.1.1.35040, Culture=neutral, PublicKeyToken=65e474d141e25e07, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Spring.Rest.1.1.1\lib\net40-client\Spring.Rest.dll</HintPath>
@@ -55,6 +59,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\DataTableHelper.cs" />
+    <Compile Include="Helpers\JsonValueHelper.cs" />
+    <Compile Include="Job.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -62,11 +69,12 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="SearchDetail.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CSharp.oDesk\CSharp.oDesk.csproj">
       <Project>{0FF28DB6-7608-4874-9EDB-E4F32AD0C574}</Project>
-      <Name>CSharp.Bitbucket</Name>
+      <Name>CSharp.oDesk</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -74,7 +82,7 @@
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+      <LastGenOutput>Settings1.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
   <ItemGroup>

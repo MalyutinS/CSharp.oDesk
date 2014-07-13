@@ -122,7 +122,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CSharp.oDesk\CSharp.oDesk.csproj">
       <Project>{0FF28DB6-7608-4874-9EDB-E4F32AD0C574}</Project>
-      <Name>CSharp.Bitbucket</Name>
+      <Name>CSharp.oDesk</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

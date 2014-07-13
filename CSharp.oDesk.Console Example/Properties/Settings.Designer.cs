@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace CSharp.oDesk.Console_Example.Properties {
+namespace CSharp.oDesk.JobsSearch.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -68,6 +68,19 @@ namespace CSharp.oDesk.Console_Example.Properties {
             }
             set {
                 this["ODeskAccessTokenSecret"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=.;Initial Catalog=ODeskJobsSearch;Integrated Security=True;Connection" +
+            " Timeout=60;Min Pool Size=2;Max Pool Size=20;")]
+        public string ConnectionString {
+            get {
+                return ((string)(this["ConnectionString"]));
+            }
+            set {
+                this["ConnectionString"] = value;
             }
         }
     }

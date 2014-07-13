@@ -5,9 +5,13 @@ VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp.oDesk", "CSharp.oDesk\CSharp.oDesk.csproj", "{0FF28DB6-7608-4874-9EDB-E4F32AD0C574}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp.oDesk.Console Example", "CSharp.oDesk.Console Example\CSharp.oDesk.Console Example.csproj", "{A59AAED3-BD15-4042-A9A4-7046C571CFE6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp.oDesk.JobsSearch", "CSharp.oDesk.Console Example\CSharp.oDesk.JobsSearch.csproj", "{A59AAED3-BD15-4042-A9A4-7046C571CFE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp.oDesk.MVC 3 Example", "CSharp.oDesk.MVC 3 Example\CSharp.oDesk.MVC 3 Example.csproj", "{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL Scripts", "SQL Scripts", "{9451074D-4ABA-4F67-B232-73AFC46241EE}"
+	ProjectSection(SolutionItems) = preProject
+		01_CreateDatabase.sql = 01_CreateDatabase.sql
+		02_CreateTables.sql = 02_CreateTables.sql
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,16 +43,6 @@ Global
 		{A59AAED3-BD15-4042-A9A4-7046C571CFE6}.Release|Mixed Platforms.Build.0 = Release|x86
 		{A59AAED3-BD15-4042-A9A4-7046C571CFE6}.Release|x86.ActiveCfg = Release|x86
 		{A59AAED3-BD15-4042-A9A4-7046C571CFE6}.Release|x86.Build.0 = Release|x86
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{9BA7B8FE-00B9-4F82-BF97-76FEEDCFE53C}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

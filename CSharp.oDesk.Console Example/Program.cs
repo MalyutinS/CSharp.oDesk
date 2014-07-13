@@ -1,23 +1,34 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using CSharp.oDesk.Api;
 using CSharp.oDesk.Connect;
-using CSharp.oDesk.Console_Example.Properties;
+using CSharp.oDesk.JobsSearch.Helpers;
+using CSharp.oDesk.JobsSearch.Properties;
 using Spring.Json;
 using Spring.Social.OAuth1;
 
-namespace CSharp.oDesk.Console_Example
+namespace CSharp.oDesk.JobsSearch
 {
     class Program
     {
-        // Please, don't forget to set your consumer key & secret here in setting file
+        // Please, don't forget to set connection string and your consumer key & secret in setting file
+        
 
         private static void Main()
         {
+            var startDate = DateTime.Now;
+
             try
             {
 
                 var oDeskServiceProvider = new oDeskServiceProvider(Settings.Default.ODeskApiKey, Settings.Default.ODeskApiSecret);
+                
+                //Settings.Default.Reset();
 
                 if (string.IsNullOrEmpty(Settings.Default.ODeskAccessTokenValue) ||
                     string.IsNullOrEmpty(Settings.Default.ODeskAccessTokenSecret))
@@ -46,7 +57,7 @@ namespace CSharp.oDesk.Console_Example
                 }
                 else
                 {
-                    Console.Write("Getting access token from settings");
+                    Console.Write("Getting access token from settings... ");
                     Console.WriteLine("Done");
                 }
 
@@ -56,8 +67,87 @@ namespace CSharp.oDesk.Console_Example
 
                 var oDesk = oDeskServiceProvider.GetApi(Settings.Default.ODeskAccessTokenValue, Settings.Default.ODeskAccessTokenSecret);
 
-                oDesk.RestOperations.GetForObjectAsync<JsonValue>("https://www.odesk.com/api/auth/v1/info.json")
-                    .ContinueWith(task => Console.WriteLine("Result: " + task.Result.ToString()));
+
+                Parallel.ForEach(GetSearchDetails(), searchDetail =>
+                {
+                    foreach (var keyword in searchDetail.Keywords)
+                    {
+                        try
+                        {
+                            int numberOfReturnedJobs;
+                            var offset = 0;
+                            const int jobsPerPage = 100;
+
+                            do
+                            {
+                                var jobsSearchcall =
+                                    oDesk.RestOperations.GetForObjectAsync<JsonValue>(
+                                        string.Format(
+                                            "https://www.odesk.com/api/profiles/v2/search/jobs.json?q={0}&paging={1};{2}",
+                                            keyword, offset, jobsPerPage));
+
+                                offset += jobsPerPage;
+
+                                var jobs = jobsSearchcall.Result.GetValues("jobs");
+
+                                numberOfReturnedJobs = jobs.Count;
+
+                                DataTable jobsDataTable = jobs.Select(job => new Job
+                                {
+                                    Id = Guid.NewGuid(),
+                                    OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
+                                    Title = job.GetValue("title").ToStringWithoutQuotes(),
+                                    OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
+                                    OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
+                                    DateCreated = DateTime.Parse(job.GetValue("date_created").ToStringWithoutQuotes()),
+                                    Budjet = !job.GetValue("budget").IsNull
+                                        ? int.Parse(job.GetValue("budget").ToString())
+                                        : 0,
+                                    ClientCountry = !job.GetValue("client").GetValue("country").IsNull
+                                        ? job.GetValue("client").GetValue("country").ToStringWithoutQuotes()
+                                        : string.Empty,
+                                    SearchCategory = searchDetail.Category,
+                                    SearchSubCategory = searchDetail.SubCategory,
+                                    SearchName = searchDetail.Name,
+                                    SearchKeyword = keyword
+                                }).ToList().ConvertToDatatable();
+
+                                if (jobsDataTable.Rows.Count > 0)
+                                {
+                                    using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+                                    {
+                                        dbConnection.Open();
+
+                                        using (
+                                            var s = new SqlBulkCopy(dbConnection)
+                                            {
+                                                DestinationTableName = "dbo.Jobs"
+                                            })
+                                        {
+                                            s.WriteToServer(jobsDataTable);
+                                        }
+                                    }
+                                }
+
+                                var pagination = jobsSearchcall.Result.GetValue("paging");
+                                Debug.Assert(numberOfReturnedJobs == int.Parse(pagination.GetValue("count").ToString()));
+
+                                Console.WriteLine("{0}: {1} +100 / {2}", keyword, pagination.GetValue("offset"),
+                                    pagination.GetValue("total"));
+
+                            } while (numberOfReturnedJobs == jobsPerPage);
+                        }
+                        catch (Exception ex)
+                        {
+                            var tmp = Console.ForegroundColor;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Keyword '{0}' failed. {1}", keyword, ex.Message);
+                            Console.ForegroundColor = tmp;
+                        }
+                    }
+                });
+
+                Console.WriteLine("Done!");
             }
             catch (AggregateException ae)
             {
@@ -77,8 +167,33 @@ namespace CSharp.oDesk.Console_Example
             }
             finally
             {
-                Console.WriteLine("--- hit <return> to quit ---");
+                var endDate = DateTime.Now;
+                Console.WriteLine("Total elapsed time: {0} h {1} min {2} sec", (endDate - startDate).Hours,
+                    (endDate - startDate).Minutes, (endDate - startDate).Seconds);
                 Console.ReadLine();
+            }
+        }
+
+        private static IEnumerable<SearchDetail> GetSearchDetails()
+        {
+            using (var connection = new SqlConnection(Settings.Default.ConnectionString))
+            {
+                var cmd = new SqlCommand("SELECT Category,SubCategory,Name,Keywords FROM dbo.SearchDetails",connection);
+
+                connection.Open();
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    yield return new SearchDetail
+                    {
+                        Category = reader.GetString(reader.GetOrdinal("Category")),
+                        SubCategory = reader.GetString(reader.GetOrdinal("SubCategory")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        Keywords = reader.GetString(reader.GetOrdinal("Keywords")).Split(new[] {','}),
+                    };
+                }
             }
         }
     }
