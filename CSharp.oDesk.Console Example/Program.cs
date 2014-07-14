@@ -60,7 +60,7 @@ namespace CSharp.oDesk.JobsSearch
                     Console.WriteLine("Done");
                 }
 
-                
+                var errors = new List<string>();
 
                 /* API */
 
@@ -90,11 +90,11 @@ namespace CSharp.oDesk.JobsSearch
 
                             numberOfReturnedJobs = jobs.Count;
 
-                            var jobsDataTable =jobs.Select(job => new Job
+                            var jobsDataTable = jobs.Select(job => new Job
                             {
                                 Id = Guid.NewGuid(),
                                 OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
-                                Title = job.GetValue("title").ToStringWithoutQuotes(),
+                                Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
                                 OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
                                 OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
                                 DateCreated = DateTime.Parse(job.GetValue("date_created").ToStringWithoutQuotes()),
@@ -133,21 +133,107 @@ namespace CSharp.oDesk.JobsSearch
                             var pagination = jobsSearchcall.Result.GetValue("paging");
                             Debug.Assert(numberOfReturnedJobs == int.Parse(pagination.GetValue("count").ToString()));
 
-                            Console.WriteLine("{0}: {1} +100 / {2}", skill.Keyword, pagination.GetValue("offset"),
-                                pagination.GetValue("total"));
+                            Console.WriteLine("{0,5} +100 / {1,5}: {2}", pagination.GetValue("offset"),
+                                pagination.GetValue("total"), skill.Keyword);
 
                         } while (numberOfReturnedJobs == jobsPerPage);
                     }
                     catch (Exception ex)
                     {
-                        var tmp = Console.ForegroundColor;
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Keyword '{0}' failed. {1}", skill.Keyword, ex.Message);
-                        Console.ForegroundColor = tmp;
+                        var error = string.Format("Keyword '{0}' failed for Jobs. {1}", skill.Keyword, ex.Message);
+                        Console.WriteLine(error);
+                        errors.Add(error);
                     }
                 });
 
                 /* Get Frelancers */
+
+                Parallel.ForEach(GetSkills(), skill =>
+                {
+                    try
+                    {
+                        int numberOfReturnedContractors;
+                        var offset = 0;
+                        const int contractorsPerPage = 100;
+
+                        do
+                        {
+                            var jobsSearchcall =
+                                oDesk.RestOperations.GetForObjectAsync<JsonValue>(
+                                    string.Format(
+                                        "https://www.odesk.com/api/profiles/v2/search/providers.json?skills={0}&is_odesk_ready=1&paging={1};{2}",
+                                        skill.Keyword, offset, contractorsPerPage));
+
+                            offset += contractorsPerPage;
+
+                            var contractors = jobsSearchcall.Result.GetValues("providers");
+
+                            numberOfReturnedContractors = contractors.Count;
+
+                            var jobsDataTable = contractors.Select(contractor => new Contractor
+                            {
+                                Id = Guid.NewGuid(),
+                                OdeskId = contractor.GetValue("id").ToStringWithoutQuotes(),
+                                Rate = double.Parse(contractor.GetValue("rate").ToStringWithoutQuotes()),
+                                Feedback = double.Parse(contractor.GetValue("feedback").ToStringWithoutQuotes()),
+                                Country = contractor.GetValue("country").ToStringWithoutQuotes(),
+                                LastActivity = !contractor.GetValue("last_activity").IsNullOrEmpty()
+                                    ? DateTime.Parse(contractor.GetValue("last_activity").ToStringWithoutQuotes())
+                                    : new DateTime(2000, 1, 1),
+                                MemberSince = !contractor.GetValue("member_since").IsNullOrEmpty()
+                                    ? DateTime.Parse(contractor.GetValue("member_since").ToStringWithoutQuotes())
+                                    : new DateTime(2000, 1, 1),
+                                PortfolioItemsCount =
+                                    int.Parse(contractor.GetValue("portfolio_items_count").ToStringWithoutQuotes()),
+                                TestPassedCount =
+                                    int.Parse(contractor.GetValue("test_passed_count").ToStringWithoutQuotes()),
+                                ProfileType = contractor.GetValue("profile_type").ToStringWithoutQuotes(),
+                                SearchName = skill.Title,
+                                SearchKeyword = skill.Keyword
+                            }).ToList().ConvertToDatatable();
+
+                            if (jobsDataTable.Rows.Count > 0)
+                            {
+                                using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+                                {
+                                    dbConnection.Open();
+
+                                    using (
+                                        var s = new SqlBulkCopy(dbConnection)
+                                        {
+                                            DestinationTableName = "dbo.Contractors"
+                                        })
+                                    {
+                                        s.WriteToServer(jobsDataTable);
+                                    }
+                                }
+                            }
+
+                            var pagination = jobsSearchcall.Result.GetValue("paging");
+                            Debug.Assert(numberOfReturnedContractors ==
+                                         int.Parse(pagination.GetValue("count").ToString()));
+
+                            Console.WriteLine("{0,5} +100 / {1,5}: {2}", pagination.GetValue("offset"),
+                                pagination.GetValue("total"), skill.Keyword);
+
+                        } while (numberOfReturnedContractors == contractorsPerPage);
+                    }
+                    catch (Exception ex)
+                    {
+                        var error = string.Format("Keyword '{0}' failed for Contractors. {1}", skill.Keyword, ex.Message);
+                        Console.WriteLine(error);
+                        errors.Add(error);
+                    }
+                });
+
+
+                foreach (var error in errors)
+                {
+                    var tmp = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(error);
+                    Console.ForegroundColor = tmp;
+                }
 
                 Console.WriteLine("Done!");
             }
@@ -180,7 +266,7 @@ namespace CSharp.oDesk.JobsSearch
         {
             using (var connection = new SqlConnection(Settings.Default.ConnectionString))
             {
-                var cmd = new SqlCommand("SELECT Title,Keyword FROM dbo.Skills",connection);
+                var cmd = new SqlCommand("SELECT Title,Keyword FROM dbo.Skills WHERE Active = 1 ", connection);
 
                 connection.Open();
 
