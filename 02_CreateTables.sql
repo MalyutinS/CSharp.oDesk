@@ -32,10 +32,7 @@ IF NOT EXISTS ( SELECT  *
               [DateCreated] [datetime] NOT NULL ,
               [Budjet] [int] NOT NULL ,
               [ClientCountry] [varchar](50) NOT NULL ,
-              [SearchCategory] [varchar](50) NOT NULL ,
-              [SearchSubCategory] [varchar](50) NOT NULL ,
-              [SearchName] [varchar](50) NOT NULL ,
-              [SearchKeyword] [varchar](50) NOT NULL ,
+              [Skill] [varchar](50) NOT NULL ,
               CONSTRAINT [PK_Jobs_1] PRIMARY KEY CLUSTERED ( [Id] ASC )
                 WITH ( PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON,
                        ALLOW_PAGE_LOCKS = ON ) ON [PRIMARY]
@@ -84,8 +81,7 @@ IF NOT EXISTS ( SELECT  *
               [PortfolioItemsCount] [int] NOT NULL ,
               [TestPassedCount] [int] NOT NULL ,
               [ProfileType] [varchar](50) NOT NULL ,
-              [SearchName] [varchar](50) NOT NULL ,
-              [SearchKeyword] [varchar](50) NOT NULL ,
+              [Skill] [varchar](50) NOT NULL ,
               CONSTRAINT [PK_Contractors_1] PRIMARY KEY CLUSTERED ( [Id] ASC )
                 WITH ( PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON,
                        ALLOW_PAGE_LOCKS = ON ) ON [PRIMARY]

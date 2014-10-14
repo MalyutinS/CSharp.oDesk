@@ -6,10 +6,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using CSharp.oDesk.Analyze.Helpers;
+using CSharp.oDesk.Analyze.Properties;
 using CSharp.oDesk.Api;
 using CSharp.oDesk.Api.Interfaces;
 using CSharp.oDesk.Connect;
-using CSharp.oDesk.JobsSearch.Properties;
 using Spring.Json;
 using Spring.Social.OAuth1;
 
@@ -71,6 +71,8 @@ namespace CSharp.oDesk.Analyze
                 /* Get List skills */
 
                 var skills = GetSkills(oDesk).ToList();
+
+                var maxSkillLen = skills.Max(x => x.Length);
                 
                 /* Get Jobs */
 
@@ -86,8 +88,7 @@ namespace CSharp.oDesk.Analyze
                         DateCreated = job.GetValue("date_created").ToDateTime(),
                         Budjet = job.GetValue("budget").ToInt32(),
                         ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
-                        SearchName = skill,
-                        SearchKeyword = skill
+                        Skill = skill
                     }));
 
                 /* Get Frelancers (Contractors) */
@@ -106,8 +107,7 @@ namespace CSharp.oDesk.Analyze
                         PortfolioItemsCount = contractor.GetValue("portfolio_items_count").ToInt32(),
                         TestPassedCount = contractor.GetValue("test_passed_count").ToInt32(),
                         ProfileType = contractor.GetValue("profile_type").ToStringWithoutQuotes(),
-                        SearchName = skill,
-                        SearchKeyword = skill
+                        Skill = skill
                     }));
 
                 /* Show all previous errors */

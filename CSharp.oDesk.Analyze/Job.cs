@@ -12,7 +12,6 @@ namespace CSharp.oDesk.Analyze
         public DateTime DateCreated { get; set; }
         public int Budjet { get; set; }
         public string ClientCountry { get; set; }
-        public string SearchName { get; set; }
-        public string SearchKeyword { get; set; }
+        public string Skill { get; set; }
     }
 }

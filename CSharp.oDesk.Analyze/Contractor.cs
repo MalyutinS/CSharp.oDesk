@@ -14,7 +14,6 @@ namespace CSharp.oDesk.Analyze
         public int PortfolioItemsCount { get; set; }
         public int TestPassedCount { get; set; }
         public string ProfileType { get; set; }
-        public string SearchName { get; set; }
-        public string SearchKeyword { get; set; }
+        public string Skill { get; set; }
     }
 }
