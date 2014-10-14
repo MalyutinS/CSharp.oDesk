@@ -141,7 +141,7 @@ namespace CSharp.oDesk.Analyze
             finally
             {
                 var endDate = DateTime.Now;
-                Console.WriteLine("Total elapsed time: {0} h {1} min {2} sec", (endDate - startDate).Hours,
+                Console.WriteLine("Total elapsed time: {0} h {1} min {2} sec", (endDate - startDate).TotalHours,
                     (endDate - startDate).Minutes, (endDate - startDate).Seconds);
                 Console.ReadLine();
             }
