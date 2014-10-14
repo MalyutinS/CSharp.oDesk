@@ -1,4 +1,4 @@
-﻿namespace CSharp.oDesk.JobsSearch.Helpers
+﻿namespace CSharp.oDesk.Analyze.Helpers
 {
     public static class StringHelper
     {

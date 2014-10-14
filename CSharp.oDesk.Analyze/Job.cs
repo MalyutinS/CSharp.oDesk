@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CSharp.oDesk.JobsSearch
+namespace CSharp.oDesk.Analyze
 {
     class Job
     {

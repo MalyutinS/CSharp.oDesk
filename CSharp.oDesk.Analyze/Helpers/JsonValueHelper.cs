@@ -2,7 +2,7 @@
 using System.Globalization;
 using Spring.Json;
 
-namespace CSharp.oDesk.JobsSearch.Helpers
+namespace CSharp.oDesk.Analyze.Helpers
 {
     public static class JsonValueHelper
     {

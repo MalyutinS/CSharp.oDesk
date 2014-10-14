@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Data;
 
-namespace CSharp.oDesk.JobsSearch.Helpers
+namespace CSharp.oDesk.Analyze.Helpers
 {
     public static  class DataTableHelper
     {

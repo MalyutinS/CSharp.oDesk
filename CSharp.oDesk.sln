@@ -5,7 +5,7 @@ VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp.oDesk", "CSharp.oDesk\CSharp.oDesk.csproj", "{0FF28DB6-7608-4874-9EDB-E4F32AD0C574}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp.oDesk.JobsSearch", "CSharp.oDesk.Console Example\CSharp.oDesk.JobsSearch.csproj", "{A59AAED3-BD15-4042-A9A4-7046C571CFE6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp.oDesk.Analyze", "CSharp.oDesk.Analyze\CSharp.oDesk.Analyze.csproj", "{A59AAED3-BD15-4042-A9A4-7046C571CFE6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL Scripts", "SQL Scripts", "{9451074D-4ABA-4F67-B232-73AFC46241EE}"
 	ProjectSection(SolutionItems) = preProject

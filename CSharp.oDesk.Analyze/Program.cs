@@ -5,15 +5,15 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
+using CSharp.oDesk.Analyze.Helpers;
 using CSharp.oDesk.Api;
 using CSharp.oDesk.Api.Interfaces;
 using CSharp.oDesk.Connect;
-using CSharp.oDesk.JobsSearch.Helpers;
 using CSharp.oDesk.JobsSearch.Properties;
 using Spring.Json;
 using Spring.Social.OAuth1;
 
-namespace CSharp.oDesk.JobsSearch
+namespace CSharp.oDesk.Analyze
 {
     class Program
     {
