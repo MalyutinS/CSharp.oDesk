@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Web;
-using CSharp.oDesk.Analyze.Helpers;
+﻿using CSharp.oDesk.Analyze.Helpers;
 using CSharp.oDesk.Analyze.Properties;
 using CSharp.oDesk.Api;
 using CSharp.oDesk.Api.Interfaces;
 using CSharp.oDesk.Connect;
 using Spring.Json;
 using Spring.Social.OAuth1;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Web;
 
 namespace CSharp.oDesk.Analyze
 {
@@ -71,8 +71,6 @@ namespace CSharp.oDesk.Analyze
                 /* Get List skills */
 
                 var skills = GetSkills(oDesk).ToList();  
-
-                var maxSkillLen = skills.Max(x => x.Length);
                 
                 /* Get Jobs */
 
@@ -149,7 +147,7 @@ namespace CSharp.oDesk.Analyze
 
         private static IEnumerable<string> GetSkills(IoDesk oDesk)
         {
-            var skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
+            Task<JsonValue> skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
 
             return skillsSearchcall.Result.GetValues("skills").Select(x => x.ToStringWithoutQuotes());
         }
