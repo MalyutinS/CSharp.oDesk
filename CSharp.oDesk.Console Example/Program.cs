@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -73,7 +74,7 @@ namespace CSharp.oDesk.JobsSearch
                 
                 /* Get Jobs */
 
-                Parallel.ForEach(skills, skill => GetBySkill(oDesk, "jobs", skill,
+                Parallel.ForEach(skills, skill => GetBySkill(oDesk, "jobs", "dbo.Jobs", skill, 
                     "https://www.odesk.com/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
                     job => new Job
                     {
@@ -89,9 +90,9 @@ namespace CSharp.oDesk.JobsSearch
                         SearchKeyword = skill
                     }));
 
-                /* Get Frelancers */
+                /* Get Frelancers (Contractors) */
 
-                Parallel.ForEach(skills, skill => GetBySkill(oDesk, "providers", skill,
+                Parallel.ForEach(skills, skill => GetBySkill(oDesk, "providers", "dbo.Contractors", skill,
                     "https://www.odesk.com/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
                     contractor => new Contractor
                     {
@@ -148,14 +149,12 @@ namespace CSharp.oDesk.JobsSearch
 
         private static IEnumerable<string> GetSkills(IoDesk oDesk)
         {
-            //var skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
+            var skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
 
-            //return skillsSearchcall.Result.GetValues("skills").Select(x => x.ToStringWithoutQuotes());
-
-            yield return "microsoft-visual-c++";
+            return skillsSearchcall.Result.GetValues("skills").Select(x => x.ToStringWithoutQuotes());
         }
 
-        private static void GetBySkill<T>(IoDesk oDesk, string name, string skill, string url, List<string> errors, Func<JsonValue, T> convert)
+        private static void GetBySkill<T>(IoDesk oDesk, string apiItemsName, string tableName, string skill, string url, List<string> errors, Func<JsonValue, T> convert)
         {
             try
             {
@@ -172,7 +171,7 @@ namespace CSharp.oDesk.JobsSearch
                     {
                         var apiCall = oDesk.RestOperations.GetForObjectAsync<JsonValue>(string.Format(url, offset, itemsPerPage));
 
-                        ICollection<JsonValue> collection = apiCall.Result.GetValues(name);
+                        ICollection<JsonValue> collection = apiCall.Result.GetValues(apiItemsName);
 
                         numberOfReturnedJobs = collection.Count;
 
@@ -197,19 +196,19 @@ namespace CSharp.oDesk.JobsSearch
 
                 if (jobsDataTable.Rows.Count > 0)
                 {
-                    //using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
-                    //{
-                    //    dbConnection.Open();
+                    using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+                    {
+                        dbConnection.Open();
 
-                    //    using (
-                    //        var s = new SqlBulkCopy(dbConnection)
-                    //        {
-                    //            DestinationTableName = "dbo.Jobs"
-                    //        })
-                    //    {
-                    //        s.WriteToServer(jobsDataTable);
-                    //    }
-                    //}
+                        using (
+                            var s = new SqlBulkCopy(dbConnection)
+                            {
+                                DestinationTableName = tableName
+                            })
+                        {
+                            s.WriteToServer(jobsDataTable);
+                        }
+                    }
                 }
             }
             catch (Exception ex)
