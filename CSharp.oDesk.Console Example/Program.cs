@@ -86,10 +86,10 @@ namespace CSharp.oDesk.JobsSearch
 
                             offset += jobsPerPage;
 
-                            var jobs = jobsSearchcall.Result.GetValues("jobs");
+                            ICollection<JsonValue> jobs = jobsSearchcall.Result.GetValues("jobs");
 
                             numberOfReturnedJobs = jobs.Count;
-
+                            
                             var jobsDataTable = jobs.Select(job => new Job
                             {
                                 Id = Guid.NewGuid(),
@@ -283,4 +283,5 @@ namespace CSharp.oDesk.JobsSearch
             }
         }
     }
+
 }
