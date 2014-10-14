@@ -70,7 +70,7 @@ namespace CSharp.oDesk.Analyze
                 
                 /* Get List skills */
 
-                var skills = GetSkills(oDesk).ToList();
+                var skills = GetSkills(oDesk).ToList();  
 
                 var maxSkillLen = skills.Max(x => x.Length);
                 
