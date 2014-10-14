@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using CSharp.oDesk.Api;
+using CSharp.oDesk.Api.Interfaces;
 using CSharp.oDesk.Connect;
 using CSharp.oDesk.JobsSearch.Helpers;
 using CSharp.oDesk.JobsSearch.Properties;
@@ -64,168 +65,51 @@ namespace CSharp.oDesk.JobsSearch
 
                 /* API */
 
-                var oDesk = oDeskServiceProvider.GetApi(Settings.Default.ODeskAccessTokenValue, Settings.Default.ODeskAccessTokenSecret);
+                IoDesk oDesk = oDeskServiceProvider.GetApi(Settings.Default.ODeskAccessTokenValue, Settings.Default.ODeskAccessTokenSecret);
+                
+                /* Get List skills */
 
+                var skills = GetSkills(oDesk).ToList();
+                
                 /* Get Jobs */
 
-                Parallel.ForEach(GetSkills(), skill =>
-                {
-                    try
+                Parallel.ForEach(skills, skill => GetBySkill(oDesk, "jobs", skill,
+                    "https://www.odesk.com/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
+                    job => new Job
                     {
-                        int numberOfReturnedJobs;
-                        var offset = 0;
-                        const int jobsPerPage = 100;
-
-                        do
-                        {
-                            var jobsSearchcall =
-                                oDesk.RestOperations.GetForObjectAsync<JsonValue>(
-                                    string.Format(
-                                        "https://www.odesk.com/api/profiles/v2/search/jobs.json?skills={0}&paging={1};{2}",
-                                        skill.Keyword, offset, jobsPerPage));
-
-                            offset += jobsPerPage;
-
-                            ICollection<JsonValue> jobs = jobsSearchcall.Result.GetValues("jobs");
-
-                            numberOfReturnedJobs = jobs.Count;
-                            
-                            var jobsDataTable = jobs.Select(job => new Job
-                            {
-                                Id = Guid.NewGuid(),
-                                OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
-                                Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
-                                OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
-                                OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
-                                DateCreated = DateTime.Parse(job.GetValue("date_created").ToStringWithoutQuotes()),
-                                Budjet =
-                                    !job.GetValue("budget").IsNull ? int.Parse(job.GetValue("budget").ToString()) : 0,
-                                ClientCountry =
-                                    !job.GetValue("client").GetValue("country").IsNull
-                                        ? job.GetValue("client").GetValue("country").ToStringWithoutQuotes()
-                                        : string.Empty,
-                                SearchCategory = string.Empty,
-                                SearchSubCategory = string.Empty,
-                                SearchName = skill.Title,
-                                SearchKeyword = skill.Keyword
-                            }).ToList().ConvertToDatatable();
-
-                            if (jobsDataTable.Rows.Count > 0)
-                            {
-
-
-                                using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
-                                {
-                                    dbConnection.Open();
-
-                                    using (
-                                        var s = new SqlBulkCopy(dbConnection)
-                                        {
-                                            DestinationTableName = "dbo.Jobs"
-                                        })
-                                    {
-                                        s.WriteToServer(jobsDataTable);
-                                    }
-                                }
-
-                            }
-
-                            var pagination = jobsSearchcall.Result.GetValue("paging");
-                            Debug.Assert(numberOfReturnedJobs == int.Parse(pagination.GetValue("count").ToString()));
-
-                            Console.WriteLine("{0,5} +100 / {1,5}: {2}", pagination.GetValue("offset"),
-                                pagination.GetValue("total"), skill.Keyword);
-
-                        } while (numberOfReturnedJobs == jobsPerPage);
-                    }
-                    catch (Exception ex)
-                    {
-                        var error = string.Format("Keyword '{0}' failed for Jobs. {1}", skill.Keyword, ex.Message);
-                        Console.WriteLine(error);
-                        errors.Add(error);
-                    }
-                });
+                        Id = Guid.NewGuid(),
+                        OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
+                        Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
+                        OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
+                        OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
+                        DateCreated = job.GetValue("date_created").ToDateTime(),
+                        Budjet = job.GetValue("budget").ToInt32(),
+                        ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
+                        SearchName = skill,
+                        SearchKeyword = skill
+                    }));
 
                 /* Get Frelancers */
 
-                Parallel.ForEach(GetSkills(), skill =>
-                {
-                    try
+                Parallel.ForEach(skills, skill => GetBySkill(oDesk, "providers", skill,
+                    "https://www.odesk.com/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
+                    contractor => new Contractor
                     {
-                        int numberOfReturnedContractors;
-                        var offset = 0;
-                        const int contractorsPerPage = 100;
+                        Id = Guid.NewGuid(),
+                        OdeskId = contractor.GetValue("id").ToStringWithoutQuotes(),
+                        Rate = contractor.GetValue("rate").ToDouble(),
+                        Feedback = contractor.GetValue("feedback").ToDouble(),
+                        Country = contractor.GetValue("country").ToStringWithoutQuotes(),
+                        LastActivity = contractor.GetValue("last_activity").ToDateTime(),
+                        MemberSince = contractor.GetValue("member_since").ToDateTime(),
+                        PortfolioItemsCount = contractor.GetValue("portfolio_items_count").ToInt32(),
+                        TestPassedCount = contractor.GetValue("test_passed_count").ToInt32(),
+                        ProfileType = contractor.GetValue("profile_type").ToStringWithoutQuotes(),
+                        SearchName = skill,
+                        SearchKeyword = skill
+                    }));
 
-                        do
-                        {
-                            var jobsSearchcall =
-                                oDesk.RestOperations.GetForObjectAsync<JsonValue>(
-                                    string.Format(
-                                        "https://www.odesk.com/api/profiles/v2/search/providers.json?skills={0}&is_odesk_ready=1&paging={1};{2}",
-                                        skill.Keyword, offset, contractorsPerPage));
-
-                            offset += contractorsPerPage;
-
-                            var contractors = jobsSearchcall.Result.GetValues("providers");
-
-                            numberOfReturnedContractors = contractors.Count;
-
-                            var jobsDataTable = contractors.Select(contractor => new Contractor
-                            {
-                                Id = Guid.NewGuid(),
-                                OdeskId = contractor.GetValue("id").ToStringWithoutQuotes(),
-                                Rate = double.Parse(contractor.GetValue("rate").ToStringWithoutQuotes()),
-                                Feedback = double.Parse(contractor.GetValue("feedback").ToStringWithoutQuotes()),
-                                Country = contractor.GetValue("country").ToStringWithoutQuotes(),
-                                LastActivity = !contractor.GetValue("last_activity").IsNullOrEmpty()
-                                    ? DateTime.Parse(contractor.GetValue("last_activity").ToStringWithoutQuotes())
-                                    : new DateTime(2000, 1, 1),
-                                MemberSince = !contractor.GetValue("member_since").IsNullOrEmpty()
-                                    ? DateTime.Parse(contractor.GetValue("member_since").ToStringWithoutQuotes())
-                                    : new DateTime(2000, 1, 1),
-                                PortfolioItemsCount =
-                                    int.Parse(contractor.GetValue("portfolio_items_count").ToStringWithoutQuotes()),
-                                TestPassedCount =
-                                    int.Parse(contractor.GetValue("test_passed_count").ToStringWithoutQuotes()),
-                                ProfileType = contractor.GetValue("profile_type").ToStringWithoutQuotes(),
-                                SearchName = skill.Title,
-                                SearchKeyword = skill.Keyword
-                            }).ToList().ConvertToDatatable();
-
-                            if (jobsDataTable.Rows.Count > 0)
-                            {
-                                using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
-                                {
-                                    dbConnection.Open();
-
-                                    using (
-                                        var s = new SqlBulkCopy(dbConnection)
-                                        {
-                                            DestinationTableName = "dbo.Contractors"
-                                        })
-                                    {
-                                        s.WriteToServer(jobsDataTable);
-                                    }
-                                }
-                            }
-
-                            var pagination = jobsSearchcall.Result.GetValue("paging");
-                            Debug.Assert(numberOfReturnedContractors ==
-                                         int.Parse(pagination.GetValue("count").ToString()));
-
-                            Console.WriteLine("{0,5} +100 / {1,5}: {2}", pagination.GetValue("offset"),
-                                pagination.GetValue("total"), skill.Keyword);
-
-                        } while (numberOfReturnedContractors == contractorsPerPage);
-                    }
-                    catch (Exception ex)
-                    {
-                        var error = string.Format("Keyword '{0}' failed for Contractors. {1}", skill.Keyword, ex.Message);
-                        Console.WriteLine(error);
-                        errors.Add(error);
-                    }
-                });
-
+                /* Show all previous errors */
 
                 foreach (var error in errors)
                 {
@@ -262,26 +146,81 @@ namespace CSharp.oDesk.JobsSearch
             }
         }
 
-        private static IEnumerable<Skill> GetSkills()
+        private static IEnumerable<string> GetSkills(IoDesk oDesk)
         {
-            using (var connection = new SqlConnection(Settings.Default.ConnectionString))
+            //var skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
+
+            //return skillsSearchcall.Result.GetValues("skills").Select(x => x.ToStringWithoutQuotes());
+
+            yield return "microsoft-visual-c++";
+        }
+
+        private static void GetBySkill<T>(IoDesk oDesk, string name, string skill, string url, List<string> errors, Func<JsonValue, T> convert)
+        {
+            try
             {
-                var cmd = new SqlCommand("SELECT Title,Keyword FROM dbo.Skills WHERE Active = 1 ", connection);
+                const int itemsPerPage = 100;
 
-                connection.Open();
+                int numberOfReturnedJobs = itemsPerPage;
+                var offset = 0;
 
-                SqlDataReader reader = cmd.ExecuteReader();
+                var list = new List<T>();
 
-                while (reader.Read())
+                do
                 {
-                    yield return new Skill
+                    try
                     {
-                        Title = reader.GetString(reader.GetOrdinal("Title")),
-                        Keyword = reader.GetString(reader.GetOrdinal("Keyword")),
-                    };
+                        var apiCall = oDesk.RestOperations.GetForObjectAsync<JsonValue>(string.Format(url, offset, itemsPerPage));
+
+                        ICollection<JsonValue> collection = apiCall.Result.GetValues(name);
+
+                        numberOfReturnedJobs = collection.Count;
+
+                        list.AddRange(collection.Select(convert));
+
+                        var pagination = apiCall.Result.GetValue("paging");
+                        Debug.Assert(numberOfReturnedJobs == Convert.ToInt32(pagination.GetValue("count").ToString()));
+                        Debug.Assert(offset == Convert.ToInt32(pagination.GetValue("offset").ToString()));
+
+                        Console.WriteLine("{0,5} +100 / {1,5}: {2}", offset, pagination.GetValue("total"),skill);
+
+                        offset += itemsPerPage;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", skill, ex.Message);
+                    }
+
+                } while (numberOfReturnedJobs == itemsPerPage);
+
+                var jobsDataTable = list.ConvertToDatatable();
+
+                if (jobsDataTable.Rows.Count > 0)
+                {
+                    //using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+                    //{
+                    //    dbConnection.Open();
+
+                    //    using (
+                    //        var s = new SqlBulkCopy(dbConnection)
+                    //        {
+                    //            DestinationTableName = "dbo.Jobs"
+                    //        })
+                    //    {
+                    //        s.WriteToServer(jobsDataTable);
+                    //    }
+                    //}
                 }
             }
+            catch (Exception ex)
+            {
+                var error = string.Format("Keyword '{0}' failed. {1}", skill, ex.Message);
+                Console.WriteLine(error);
+                errors.Add(error);
+            }
         }
+
+        
     }
 
 }

@@ -16,10 +16,10 @@
       <Value Profile="(Default)">Data Source=.;Initial Catalog=ODeskJobsSearch;Integrated Security=True;Connection Timeout=60;Min Pool Size=2;Max Pool Size=20;</Value>
     </Setting>
     <Setting Name="ODeskApiKey" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">ce3f52a735c62bf096631061e6e5d640</Value>
     </Setting>
     <Setting Name="ODeskApiSecret" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">8cc17d48c8414d1c</Value>
     </Setting>
   </Settings>
 </SettingsFile>
