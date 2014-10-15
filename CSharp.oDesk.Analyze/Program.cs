@@ -76,20 +76,20 @@ namespace CSharp.oDesk.Analyze
                 
                 /* Get Jobs */
 
-                //Parallel.ForEach(skills, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill, 
-                //    "/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
-                //    job => new Job
-                //    {
-                //        Id = Guid.NewGuid(),
-                //        OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
-                //        Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
-                //        OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
-                //        OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
-                //        DateCreated = job.GetValue("date_created").ToDateTime(),
-                //        Budjet = job.GetValue("budget").ToInt32(),
-                //        ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
-                //        Skill = skill
-                //    }));
+                Parallel.ForEach(skills, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
+                    "/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors, 
+                    job => new Job
+                    {
+                        Id = Guid.NewGuid(),
+                        OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
+                        Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
+                        OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
+                        OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
+                        DateCreated = job.GetValue("date_created").ToDateTime(),
+                        Budjet = job.GetValue("budget").ToInt32(),
+                        ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
+                        Skill = skill
+                    }));
 
                 /* Get Frelancers (Contractors) Skills */
 
@@ -105,7 +105,7 @@ namespace CSharp.oDesk.Analyze
                 /* Get Frelancers (Contractors) Details */
 
                 Parallel.ForEach(Contractors, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
-                    string.Format("/api/profiles/v1/providers/{0}/brief.json", contractorId), errors,
+                    string.Format("/api/profiles/v1/providers/{0}/brief.json", contractorId), errors, 
                     profile => new Contractor
                     {
                         Id = Guid.NewGuid(),
@@ -170,15 +170,15 @@ namespace CSharp.oDesk.Analyze
 
         private static IEnumerable<string> GetSkills(IoDesk oDesk)
         {
-            //Task<JsonValue> skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
+            Task<JsonValue> skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
 
-            //return skillsSearchcall.Result.GetValues("skills").Select(x => x.ToStringWithoutQuotes());
+            return skillsSearchcall.Result.GetValues("skills").Select(x => x.ToStringWithoutQuotes());
 
-            yield return "ColdFusion";
+            //yield return "ColdFusion";
         }
 
 
-        private static void GetSingleItem<T>(IoDesk oDesk, string apiItemName, string tableName, string key, string url, List<string> errors, Func<JsonValue, T> convert)
+        private static void GetSingleItem<T>(IoDesk oDesk, string apiItemName, string tableName, string key, string url, List<string> errors,  Func<JsonValue, T> convert)
         {
             try
             {
@@ -276,22 +276,22 @@ namespace CSharp.oDesk.Analyze
 
         private static void SaveDataTableToDatabase(DataTable sourceDataTable, string destinationTableName)
         {
-            //if (sourceDataTable.Rows.Count > 0)
-            //{
-            //    using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
-            //    {
-            //        dbConnection.Open();
+            if (sourceDataTable.Rows.Count > 0)
+            {
+                using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+                {
+                    dbConnection.Open();
 
-            //        using (
-            //            var s = new SqlBulkCopy(dbConnection)
-            //            {
-            //                DestinationTableName = destinationTableName
-            //            })
-            //        {
-            //            s.WriteToServer(sourceDataTable);
-            //        }
-            //    }
-            //}
+                    using (
+                        var s = new SqlBulkCopy(dbConnection)
+                        {
+                            DestinationTableName = destinationTableName
+                        })
+                    {
+                        s.WriteToServer(sourceDataTable);
+                    }
+                }
+            }
         }
 
         

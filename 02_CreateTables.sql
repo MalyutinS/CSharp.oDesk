@@ -69,7 +69,7 @@ IF NOT EXISTS ( SELECT  *
                         AND type IN ( N'U' ) ) 
     BEGIN
 
-        CREATE TABLE [dbo].[Contractors]
+        CREATE TABLE [dbo].[Contractors_Skills]
             (
               [Id] [uniqueidentifier] NOT NULL ,
               [ODeskId] [varchar](50) NOT NULL ,
