@@ -1,4 +1,5 @@
-﻿using CSharp.oDesk.Analyze.Helpers;
+﻿using System.Data;
+using CSharp.oDesk.Analyze.Helpers;
 using CSharp.oDesk.Analyze.Properties;
 using CSharp.oDesk.Api;
 using CSharp.oDesk.Api.Interfaces;
@@ -19,6 +20,7 @@ namespace CSharp.oDesk.Analyze
     {
         // Please, don't forget to set connection string and your consumer key & secret in setting file
         
+        private static readonly List<string> Contractors = new List<string>(); 
 
         private static void Main()
         {
@@ -30,7 +32,7 @@ namespace CSharp.oDesk.Analyze
                 var oDeskServiceProvider = new oDeskServiceProvider(Settings.Default.ODeskApiKey, Settings.Default.ODeskApiSecret);
                 
                 //Settings.Default.Reset();
-
+               
                 if (string.IsNullOrEmpty(Settings.Default.ODeskAccessTokenValue) ||
                     string.IsNullOrEmpty(Settings.Default.ODeskAccessTokenSecret))
                 {
@@ -70,43 +72,63 @@ namespace CSharp.oDesk.Analyze
                 
                 /* Get List skills */
 
-                var skills = GetSkills(oDesk).ToList();  
+                var skills = GetSkills(oDesk).ToList();
                 
                 /* Get Jobs */
 
-                Parallel.ForEach(skills, skill => GetBySkill(oDesk, "jobs", "dbo.Jobs", skill, 
-                    "https://www.odesk.com/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
-                    job => new Job
+                //Parallel.ForEach(skills, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill, 
+                //    "/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
+                //    job => new Job
+                //    {
+                //        Id = Guid.NewGuid(),
+                //        OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
+                //        Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
+                //        OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
+                //        OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
+                //        DateCreated = job.GetValue("date_created").ToDateTime(),
+                //        Budjet = job.GetValue("budget").ToInt32(),
+                //        ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
+                //        Skill = skill
+                //    }));
+
+                /* Get Frelancers (Contractors) Skills */
+
+                Parallel.ForEach(skills, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
+                    "/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&include_entities=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
+                    contractor => new ContractorSkill
                     {
                         Id = Guid.NewGuid(),
-                        OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
-                        Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
-                        OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
-                        OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
-                        DateCreated = job.GetValue("date_created").ToDateTime(),
-                        Budjet = job.GetValue("budget").ToInt32(),
-                        ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
+                        OdeskId = contractor.ToStringWithoutQuotes(),
                         Skill = skill
                     }));
 
-                /* Get Frelancers (Contractors) */
+                /* Get Frelancers (Contractors) Details */
 
-                Parallel.ForEach(skills, skill => GetBySkill(oDesk, "providers", "dbo.Contractors", skill,
-                    "https://www.odesk.com/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
-                    contractor => new Contractor
+                Parallel.ForEach(Contractors, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
+                    string.Format("/api/profiles/v1/providers/{0}/brief.json", contractorId), errors,
+                    profile => new Contractor
                     {
                         Id = Guid.NewGuid(),
-                        OdeskId = contractor.GetValue("id").ToStringWithoutQuotes(),
-                        Rate = contractor.GetValue("rate").ToDouble(),
-                        Feedback = contractor.GetValue("feedback").ToDouble(),
-                        Country = contractor.GetValue("country").ToStringWithoutQuotes(),
-                        LastActivity = contractor.GetValue("last_activity").ToDateTime(),
-                        MemberSince = contractor.GetValue("member_since").ToDateTime(),
-                        PortfolioItemsCount = contractor.GetValue("portfolio_items_count").ToInt32(),
-                        TestPassedCount = contractor.GetValue("test_passed_count").ToInt32(),
-                        ProfileType = contractor.GetValue("profile_type").ToStringWithoutQuotes(),
-                        Skill = skill
+                        OdeskId = contractorId,
+                        TotalHours = profile.GetValue("dev_total_hours").ToDouble(),
+                        EngSkill = profile.GetValue("dev_eng_skill").ToInt32(),
+                        Country = profile.GetValue("dev_country").ToStringWithoutQuotes(),
+                        TotalFeedback = profile.GetValue("dev_tot_feedback").ToDouble(),
+                        IsAffiliated = profile.GetValue("dev_is_affiliated").ToInt32(),
+                        AdjScore = profile.GetValue("dev_adj_score").ToDouble(),
+                        AdjScoreRecent = profile.GetValue("dev_adj_score_recent").ToDouble(),
+                        LastWorkedTs = profile.GetValue("dev_last_worked_ts").ToInt64(),
+                        LastWorked = profile.GetValue("dev_last_worked").ToStringWithoutQuotes(),
+                        PortfolioItemsCount = profile.GetValue("dev_portfolio_items_count").ToInt32(),
+                        UiProfileAccess = profile.GetValue("dev_ui_profile_access").ToStringWithoutQuotes(),
+                        BilledAssignments = profile.GetValue("dev_billed_assignments").ToInt32(),
+                        BillRate = profile.GetValue("dev_bill_rate").ToDouble(),
+                        RecNo = profile.GetValue("dev_recno").ToInt32(),
+                        City = profile.GetValue("dev_city").ToStringWithoutQuotes(),
+                        LastActivity = profile.GetValue("dev_last_activity").ToStringWithoutQuotes(),
+                        ShortName = profile.GetValue("dev_short_name").ToStringWithoutQuotes()
                     }));
+                
 
                 /* Show all previous errors */
 
@@ -138,21 +160,60 @@ namespace CSharp.oDesk.Analyze
             }
             finally
             {
-                var endDate = DateTime.Now;
-                Console.WriteLine("Total elapsed time: {0} h {1} min {2} sec", (endDate - startDate).TotalHours,
-                    (endDate - startDate).Minutes, (endDate - startDate).Seconds);
+                var interval = DateTime.Now - startDate;
+
+                Console.WriteLine("Total elapsed time: {0} h {1} min {2} sec", interval.Days * 24 + interval.Hours,
+                    interval.Minutes, interval.Seconds);
                 Console.ReadLine();
             }
         }
 
         private static IEnumerable<string> GetSkills(IoDesk oDesk)
         {
-            Task<JsonValue> skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
+            //Task<JsonValue> skillsSearchcall = oDesk.RestOperations.GetForObjectAsync<JsonValue>("/api/profiles/v1/metadata/skills.json");
 
-            return skillsSearchcall.Result.GetValues("skills").Select(x => x.ToStringWithoutQuotes());
+            //return skillsSearchcall.Result.GetValues("skills").Select(x => x.ToStringWithoutQuotes());
+
+            yield return "ColdFusion";
         }
 
-        private static void GetBySkill<T>(IoDesk oDesk, string apiItemsName, string tableName, string skill, string url, List<string> errors, Func<JsonValue, T> convert)
+
+        private static void GetSingleItem<T>(IoDesk oDesk, string apiItemName, string tableName, string key, string url, List<string> errors, Func<JsonValue, T> convert)
+        {
+            try
+            {
+                T item = default(T);
+
+                do
+                {
+                    try
+                    {
+                        var apiCall = oDesk.RestOperations.GetForObjectAsync<JsonValue>(url);
+
+                        JsonValue json = apiCall.Result.GetValue(apiItemName);
+                        
+                        item = convert(json);
+
+                        Console.WriteLine("Key '{0}' ok.", key);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(key + " " + ex.Message);
+                    }
+                } while (Equals(item,default(T)));
+
+
+                SaveDataTableToDatabase(new List<T> {item}.ConvertToDatatable(), tableName);
+            }
+            catch (Exception ex)
+            {
+                var error = string.Format("Key '{0}' failed. {1}", key, ex.Message);
+                Console.WriteLine(error);
+                errors.Add(error);
+            }
+        }
+
+        private static void GetByMultipleItems<T>(IoDesk oDesk, string apiItemsName, string tableName, string key, string url, List<string> errors, Func<JsonValue, T> convert)
         {
             try
             {
@@ -179,42 +240,58 @@ namespace CSharp.oDesk.Analyze
                         Debug.Assert(numberOfReturnedJobs == Convert.ToInt32(pagination.GetValue("count").ToString()));
                         Debug.Assert(offset == Convert.ToInt32(pagination.GetValue("offset").ToString()));
 
-                        Console.WriteLine("{0,5} +100 / {1,5}: {2}", offset, pagination.GetValue("total"),skill);
+                        Console.WriteLine("{0,5} +100 / {1,5}: {2}", offset, pagination.GetValue("total"),key);
 
                         offset += itemsPerPage;
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", skill, ex.Message);
+                        Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", key, ex.Message);
                     }
 
                 } while (numberOfReturnedJobs == itemsPerPage);
 
-                var jobsDataTable = list.ConvertToDatatable();
+                var dataTable = list.ConvertToDatatable();
 
-                if (jobsDataTable.Rows.Count > 0)
+                SaveDataTableToDatabase(dataTable, tableName);
+
+                if (apiItemsName == "providers")
                 {
-                    using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+                    foreach (DataRow row in dataTable.Rows)
                     {
-                        dbConnection.Open();
-
-                        using (
-                            var s = new SqlBulkCopy(dbConnection)
-                            {
-                                DestinationTableName = tableName
-                            })
+                        if (!Contractors.Contains(row["OdeskId"].ToString()))
                         {
-                            s.WriteToServer(jobsDataTable);
+                            Contractors.Add(row["OdeskId"].ToString());
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                var error = string.Format("Keyword '{0}' failed. {1}", skill, ex.Message);
+                var error = string.Format("Key '{0}' failed. {1}", key, ex.Message);
                 Console.WriteLine(error);
                 errors.Add(error);
             }
+        }
+
+        private static void SaveDataTableToDatabase(DataTable sourceDataTable, string destinationTableName)
+        {
+            //if (sourceDataTable.Rows.Count > 0)
+            //{
+            //    using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+            //    {
+            //        dbConnection.Open();
+
+            //        using (
+            //            var s = new SqlBulkCopy(dbConnection)
+            //            {
+            //                DestinationTableName = destinationTableName
+            //            })
+            //        {
+            //            s.WriteToServer(sourceDataTable);
+            //        }
+            //    }
+            //}
         }
 
         

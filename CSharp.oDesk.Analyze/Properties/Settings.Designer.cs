@@ -60,7 +60,7 @@ namespace CSharp.oDesk.Analyze.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("ce3f52a735c62bf096631061e6e5d640")]
+        [global::System.Configuration.DefaultSettingValueAttribute("b1638a2849c8251c42f0a5352712d5b8")]
         public string ODeskApiKey {
             get {
                 return ((string)(this["ODeskApiKey"]));
@@ -72,7 +72,7 @@ namespace CSharp.oDesk.Analyze.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("8cc17d48c8414d1c")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0fc06d5ed30738c6")]
         public string ODeskApiSecret {
             get {
                 return ((string)(this["ODeskApiSecret"]));

@@ -8,7 +8,7 @@ namespace CSharp.oDesk.Analyze.Helpers
     {
         public static double ToDouble(this JsonValue value)
         {
-            if (value == null || value.IsNull)
+            if (value == null || value.IsNull || string.IsNullOrEmpty(ToStringWithoutQuotes(value)))
             {
                 return 0;
             }
@@ -17,11 +17,20 @@ namespace CSharp.oDesk.Analyze.Helpers
 
         public static int ToInt32(this JsonValue value)
         {
-            if (value == null || value.IsNull)
+            if (value == null || value.IsNull || string.IsNullOrEmpty(ToStringWithoutQuotes(value)))
             {
                 return 0;
             }
             return Convert.ToInt32(value.ToStringWithoutQuotes(), CultureInfo.InvariantCulture);
+        }
+
+        public static long ToInt64(this JsonValue value)
+        {
+            if (value == null || value.IsNull || string.IsNullOrEmpty(ToStringWithoutQuotes(value)))
+            {
+                return 0;
+            }
+            return Convert.ToInt64(value.ToStringWithoutQuotes(), CultureInfo.InvariantCulture);
         }
 
         public static DateTime ToDateTime(this JsonValue value)

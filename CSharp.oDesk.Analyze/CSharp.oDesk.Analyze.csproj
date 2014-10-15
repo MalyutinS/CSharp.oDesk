@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contractor.cs" />
+    <Compile Include="ContractorSkill.cs" />
     <Compile Include="Helpers\DataTableHelper.cs" />
     <Compile Include="Helpers\JsonValueHelper.cs" />
     <Compile Include="Helpers\StringHelper.cs" />
