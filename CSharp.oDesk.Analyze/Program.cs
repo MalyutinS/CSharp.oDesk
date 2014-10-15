@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Concurrent;
+using System.Data;
 using CSharp.oDesk.Analyze.Helpers;
 using CSharp.oDesk.Analyze.Properties;
 using CSharp.oDesk.Api;
@@ -19,8 +20,8 @@ namespace CSharp.oDesk.Analyze
     class Program
     {
         // Please, don't forget to set connection string and your consumer key & secret in setting file
-        
-        private static readonly List<string> Contractors = new List<string>(); 
+
+        private static readonly ConcurrentBag<string> Contractors = new ConcurrentBag<string>(); 
 
         private static void Main()
         {
@@ -64,7 +65,7 @@ namespace CSharp.oDesk.Analyze
                     Console.WriteLine("Done");
                 }
 
-                var errors = new List<string>();
+                var errors = new ConcurrentBag<string>();
 
                 /* API */
 
@@ -178,7 +179,7 @@ namespace CSharp.oDesk.Analyze
         }
 
 
-        private static void GetSingleItem<T>(IoDesk oDesk, string apiItemName, string tableName, string key, string url, List<string> errors,  Func<JsonValue, T> convert)
+        private static void GetSingleItem<T>(IoDesk oDesk, string apiItemName, string tableName, string key, string url, ConcurrentBag<string> errors, Func<JsonValue, T> convert)
         {
             try
             {
@@ -213,7 +214,7 @@ namespace CSharp.oDesk.Analyze
             }
         }
 
-        private static void GetByMultipleItems<T>(IoDesk oDesk, string apiItemsName, string tableName, string key, string url, List<string> errors, Func<JsonValue, T> convert)
+        private static void GetByMultipleItems<T>(IoDesk oDesk, string apiItemsName, string tableName, string key, string url, ConcurrentBag<string> errors, Func<JsonValue, T> convert)
         {
             try
             {
