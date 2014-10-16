@@ -21,7 +21,7 @@ namespace CSharp.oDesk.Analyze
     {
         // Please, don't forget to set connection string and your consumer key & secret in setting file
 
-        private static readonly ConcurrentBag<string> Contractors = new ConcurrentBag<string>(); 
+        
 
         private static void Main()
         {
@@ -66,6 +66,7 @@ namespace CSharp.oDesk.Analyze
                 }
 
                 var errors = new ConcurrentBag<string>();
+                var contractors = new ConcurrentBag<string>(); 
 
                 /* API */
 
@@ -77,7 +78,7 @@ namespace CSharp.oDesk.Analyze
                 
                 /* Get Jobs */
 
-                Parallel.ForEach(skills, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
+                Parallel.ForEach(skills, new ParallelOptions { MaxDegreeOfParallelism = 3 }, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
                     "/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors, 
                     job => new Job
                     {
@@ -90,22 +91,22 @@ namespace CSharp.oDesk.Analyze
                         Budjet = job.GetValue("budget").ToInt32(),
                         ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
                         Skill = skill
-                    }));
+                    }, null));
 
                 /* Get Frelancers (Contractors) Skills */
 
-                Parallel.ForEach(skills, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
+                Parallel.ForEach(skills, new ParallelOptions { MaxDegreeOfParallelism = 3 }, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
                     "/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&include_entities=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
                     contractor => new ContractorSkill
                     {
                         Id = Guid.NewGuid(),
                         OdeskId = contractor.ToStringWithoutQuotes(),
                         Skill = skill
-                    }));
+                    }, contractors));
 
                 /* Get Frelancers (Contractors) Details */
 
-                Parallel.ForEach(Contractors, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
+                Parallel.ForEach(contractors, new ParallelOptions { MaxDegreeOfParallelism = 3 }, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
                     string.Format("/api/profiles/v1/providers/{0}/brief.json", contractorId), errors, 
                     profile => new Contractor
                     {
@@ -214,7 +215,7 @@ namespace CSharp.oDesk.Analyze
             }
         }
 
-        private static void GetByMultipleItems<T>(IoDesk oDesk, string apiItemsName, string tableName, string key, string url, ConcurrentBag<string> errors, Func<JsonValue, T> convert)
+        private static void GetByMultipleItems<T>(IoDesk oDesk, string apiItemsName, string tableName, string key, string url, ConcurrentBag<string> errors, Func<JsonValue, T> convert, ConcurrentBag<string> contractors)
         {
             try
             {
@@ -229,7 +230,7 @@ namespace CSharp.oDesk.Analyze
                 {
                     try
                     {
-                        var apiCall = oDesk.RestOperations.GetForObjectAsync<JsonValue>(string.Format(url, offset, itemsPerPage));
+                        Task<JsonValue> apiCall = oDesk.RestOperations.GetForObjectAsync<JsonValue>(string.Format(url, offset, itemsPerPage));
 
                         ICollection<JsonValue> collection = apiCall.Result.GetValues(apiItemsName);
 
@@ -238,8 +239,8 @@ namespace CSharp.oDesk.Analyze
                         list.AddRange(collection.Select(convert));
 
                         var pagination = apiCall.Result.GetValue("paging");
-                        Debug.Assert(numberOfReturnedJobs == Convert.ToInt32(pagination.GetValue("count").ToString()));
-                        Debug.Assert(offset == Convert.ToInt32(pagination.GetValue("offset").ToString()));
+                        //Debug.Assert(numberOfReturnedJobs == Convert.ToInt32(pagination.GetValue("count").ToString()));
+                        //Debug.Assert(offset == Convert.ToInt32(pagination.GetValue("offset").ToString()));
 
                         Console.WriteLine("{0,5} +100 / {1,5}: {2}", offset, pagination.GetValue("total"),key);
 
@@ -256,13 +257,13 @@ namespace CSharp.oDesk.Analyze
 
                 SaveDataTableToDatabase(dataTable, tableName);
 
-                if (apiItemsName == "providers")
+                if (contractors != null)
                 {
                     foreach (DataRow row in dataTable.Rows)
                     {
-                        if (!Contractors.Contains(row["OdeskId"].ToString()))
+                        if (!contractors.Contains(row["OdeskId"].ToString()))
                         {
-                            Contractors.Add(row["OdeskId"].ToString());
+                            contractors.Add(row["OdeskId"].ToString());
                         }
                     }
                 }
