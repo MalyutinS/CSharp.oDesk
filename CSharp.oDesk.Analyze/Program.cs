@@ -107,7 +107,7 @@ namespace CSharp.oDesk.Analyze
 
                 /* Get Frelancers (Contractors) Details */
 
-                Parallel.ForEach(GetExistingContractors(),new ParallelOptions { MaxDegreeOfParallelism = 4 }, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
+                Parallel.ForEach(GetExistingContractors(),new ParallelOptions { MaxDegreeOfParallelism = 8 }, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
                     string.Format("/api/profiles/v1/providers/{0}/brief.json", contractorId), errors, 
                     profile => new Contractor
                     {
@@ -186,7 +186,7 @@ namespace CSharp.oDesk.Analyze
             try
             {
                 T item = default(T);
-
+                int tryCount = 0;
                 do
                 {
                     try
@@ -202,8 +202,12 @@ namespace CSharp.oDesk.Analyze
                     catch (Exception ex)
                     {
                         Console.WriteLine(key + " " + ex.Message);
+                        if (++tryCount > 10)
+                        {
+                            throw;
+                        };
                     }
-                } while (Equals(item,default(T)));
+                } while (Equals(item, default(T)));
 
 
                 SaveDataTableToDatabase(new List<T> {item}.ConvertToDatatable(), tableName);
