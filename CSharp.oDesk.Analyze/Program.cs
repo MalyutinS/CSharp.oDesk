@@ -21,8 +21,6 @@ namespace CSharp.oDesk.Analyze
     {
         // Please, don't forget to set connection string and your consumer key & secret in setting file
 
-        private static readonly ConcurrentBag<string> Contractors = new ConcurrentBag<string>(); 
-
         private static void Main()
         {
             var startDate = DateTime.Now;
@@ -77,7 +75,9 @@ namespace CSharp.oDesk.Analyze
                 
                 /* Get Jobs */
 
-                Parallel.ForEach(skills, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
+                var jobSkills = skills.Except(GetExistingSkillsForJobs());
+
+                Parallel.ForEach(jobSkills, new ParallelOptions { MaxDegreeOfParallelism = 4 }, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
                     "/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors, 
                     job => new Job
                     {
@@ -94,7 +94,9 @@ namespace CSharp.oDesk.Analyze
 
                 /* Get Frelancers (Contractors) Skills */
 
-                Parallel.ForEach(skills, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
+                var contractorSkills = skills.Except(GetExistingSkillsForContractors());
+
+                Parallel.ForEach(contractorSkills, new ParallelOptions { MaxDegreeOfParallelism = 4 }, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
                     "/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&include_entities=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
                     contractor => new ContractorSkill
                     {
@@ -105,7 +107,7 @@ namespace CSharp.oDesk.Analyze
 
                 /* Get Frelancers (Contractors) Details */
 
-                Parallel.ForEach(Contractors, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
+                Parallel.ForEach(GetExistingContractors(),new ParallelOptions { MaxDegreeOfParallelism = 4 }, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
                     string.Format("/api/profiles/v1/providers/{0}/brief.json", contractorId), errors, 
                     profile => new Contractor
                     {
@@ -245,6 +247,19 @@ namespace CSharp.oDesk.Analyze
 
                         offset += itemsPerPage;
                     }
+                    catch (AggregateException ae)
+                    {
+                        ae.Handle(ex =>
+                        {
+                            if (ex is oDeskApiException)
+                            {
+                                Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", key, ex.Message);
+                                return true;
+                            }
+                            Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", key, ex.Message);
+                            return false;
+                        });
+                    }
                     catch (Exception ex)
                     {
                         Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", key, ex.Message);
@@ -255,17 +270,6 @@ namespace CSharp.oDesk.Analyze
                 var dataTable = list.ConvertToDatatable();
 
                 SaveDataTableToDatabase(dataTable, tableName);
-
-                if (apiItemsName == "providers")
-                {
-                    foreach (DataRow row in dataTable.Rows)
-                    {
-                        if (!Contractors.Contains(row["OdeskId"].ToString()))
-                        {
-                            Contractors.Add(row["OdeskId"].ToString());
-                        }
-                    }
-                }
             }
             catch (Exception ex)
             {
@@ -295,7 +299,59 @@ namespace CSharp.oDesk.Analyze
             }
         }
 
-        
+        private static IEnumerable<string> GetExistingSkillsForContractors()
+        {
+            using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+            {
+                var cmd = new SqlCommand("select distinct skill from dbo.contractors_skills",dbConnection);
+
+                dbConnection.Open();
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        yield return reader.GetString(0);
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<string> GetExistingSkillsForJobs()
+        {
+            using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+            {
+                var cmd = new SqlCommand("select distinct skill from jobs", dbConnection);
+
+                dbConnection.Open();
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        yield return reader.GetString(0);
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<string> GetExistingContractors()
+        {
+            using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
+            {
+                var cmd = new SqlCommand("select distinct ODeskId from contractors_skills where ODeskId not in (select distinct ODeskId from contractors)", dbConnection);
+
+                dbConnection.Open();
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        yield return reader.GetString(0);
+                    }
+                }
+            }
+        }
     }
 
 }
