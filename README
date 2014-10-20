@@ -7,6 +7,6 @@ It contains the following
   * OAuth connection support for oDesk
   * API access via explicit Urls and response handling for oDesk
 
-2. CSharp.oDesk.Analyze is a project to fetch Jobs and Contractors information based on their skills. All fetched data is saving to SQL Server database. There are scripts to create database and tables - 01_CreateDatabase.sql	and 02_CreateTables.sql	
+2. CSharp.oDesk.Analyze is a project to fetch Jobs and Contractors information based on their skills. All the retrieved data is stored in the database. There are scripts to create database and tables - 01_CreateDatabase.sql	and 02_CreateTables.sql	
 
 API documentation can be found here: http://developers.odesk.com/API-Documentation
