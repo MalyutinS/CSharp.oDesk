@@ -75,13 +75,15 @@ namespace CSharp.oDesk.Analyze
 
                 var skills = GetSkills(oDesk).ToList();
 
-                Console.WriteLine("{0}: {1} skills fetched", DateTime.Now, skills.Count);
+                Console.WriteLine("{0}: {1} skills fetched (longest: {2} chars)", DateTime.Now, skills.Count, skills.Max(x=>x.Length));
 
                 /* Get Jobs */
 
-                var jobSkills = skills.Except(GetExistingSkillsForJobs());
+                var jobSkills = skills.Except(GetExistingSkillsForJobs()).ToList();
 
-                Parallel.ForEach(jobSkills, new ParallelOptions { MaxDegreeOfParallelism = 4 }, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
+                Console.WriteLine("{0}: {1} skills to search for a Jobs", DateTime.Now, jobSkills.Count);
+
+                Parallel.ForEach(jobSkills, new ParallelOptions { MaxDegreeOfParallelism = 2 }, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
                     "/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors, 
                     job => new Job
                     {
@@ -98,9 +100,11 @@ namespace CSharp.oDesk.Analyze
 
                 /* Get Frelancers (Contractors) Skills */
 
-                var contractorSkills = skills.Except(GetExistingSkillsForContractors());
+                var contractorSkills = skills.Except(GetExistingSkillsForContractors()).ToList();
 
-                Parallel.ForEach(contractorSkills, new ParallelOptions { MaxDegreeOfParallelism = 4 }, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
+                Console.WriteLine("{0}: {1} skills to search for a Contractors", DateTime.Now, contractorSkills.Count);
+
+                Parallel.ForEach(contractorSkills, new ParallelOptions { MaxDegreeOfParallelism = 2 }, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
                     "/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&include_entities=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
                     contractor => new ContractorSkill
                     {
@@ -111,7 +115,7 @@ namespace CSharp.oDesk.Analyze
 
                 /* Get Frelancers (Contractors) Details */
 
-                Parallel.ForEach(GetExistingContractors(),new ParallelOptions { MaxDegreeOfParallelism = 8 }, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
+                Parallel.ForEach(GetExistingContractors(),new ParallelOptions { MaxDegreeOfParallelism = 2 }, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
                     string.Format("/api/profiles/v1/providers/{0}/brief.json", contractorId), errors, 
                     profile => new Contractor
                     {
@@ -155,6 +159,10 @@ namespace CSharp.oDesk.Analyze
                 {
                     if (ex is oDeskApiException)
                     {
+                        Console.WriteLine(ex.Message);
+                        return true;
+                    }
+                    if (ex is Exception) {
                         Console.WriteLine(ex.Message);
                         return true;
                     }
@@ -281,7 +289,7 @@ namespace CSharp.oDesk.Analyze
             }
             catch (Exception ex)
             {
-                var error = string.Format("{0}: Key '{1' failed. {2}", DateTime.Now, key, ex.Message);
+                var error = string.Format("{0}: Key '{1}' failed. {2}", DateTime.Now, key, ex.Message);
                 Console.WriteLine(error);
                 errors.Add(error);
             }
@@ -294,11 +302,12 @@ namespace CSharp.oDesk.Analyze
                 using (var dbConnection = new SqlConnection(Settings.Default.ConnectionString))
                 {
                     dbConnection.Open();
-
+                    
                     using (
                         var s = new SqlBulkCopy(dbConnection)
                         {
-                            DestinationTableName = destinationTableName
+                            DestinationTableName = destinationTableName,
+                            BulkCopyTimeout = 60*10 // 10 mins
                         })
                     {
                         s.WriteToServer(sourceDataTable);

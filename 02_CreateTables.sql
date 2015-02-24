@@ -26,7 +26,7 @@ IF NOT EXISTS ( SELECT  *
               [DateCreated] [datetime] NOT NULL ,
               [Budjet] [int] NOT NULL ,
               [ClientCountry] [varchar](50) NOT NULL ,
-              [Skill] [varchar](50) NOT NULL ,
+              [Skill] [varchar](100) NOT NULL ,
               CONSTRAINT [PK_Jobs_1] PRIMARY KEY CLUSTERED ( [Id] ASC )
                 WITH ( PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON,
                        ALLOW_PAGE_LOCKS = ON ) ON [PRIMARY]
@@ -64,7 +64,7 @@ IF NOT EXISTS ( SELECT  *
             (
               [Id] [uniqueidentifier] NOT NULL ,
               [ODeskId] [varchar](50) NOT NULL ,
-              [Skill] [varchar](50) NOT NULL ,
+              [Skill] [varchar](100) NOT NULL ,
               CONSTRAINT [PK_Contractors_Skills_1] PRIMARY KEY CLUSTERED ( [Id] ASC )
                 WITH ( PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON,
                        ALLOW_PAGE_LOCKS = ON ) ON [PRIMARY]
