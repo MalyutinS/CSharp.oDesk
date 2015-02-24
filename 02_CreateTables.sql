@@ -1,10 +1,4 @@
-﻿USE [ODeskJobsSearch]
-GO
-
-
-
-USE [ODeskJobsSearch]
-GO
+﻿
 
 /****** Object:  Table [dbo].[Jobs]    Script Date: 07/13/2014 11:59:35 ******/
 SET ANSI_NULLS ON
@@ -50,9 +44,6 @@ GO
 
 
 
-USE [ODeskJobsSearch]
-GO
-
 /****** Object:  Table [dbo].[Contractors_Skills]    Script Date: 07/13/2014 11:59:35 ******/
 SET ANSI_NULLS ON
 GO
@@ -90,8 +81,6 @@ GO
 
 
 
-USE [ODeskJobsSearch]
-GO
 
 /****** Object:  Table [dbo].[Contractors]    Script Date: 07/13/2014 11:59:35 ******/
 SET ANSI_NULLS ON

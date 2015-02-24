@@ -71,8 +71,12 @@ namespace CSharp.oDesk.Analyze
                 
                 /* Get List skills */
 
+                Console.WriteLine("{0}: Requesting list of skills", DateTime.Now);
+
                 var skills = GetSkills(oDesk).ToList();
-                
+
+                Console.WriteLine("{0}: {1} skills fetched", DateTime.Now, skills.Count);
+
                 /* Get Jobs */
 
                 var jobSkills = skills.Except(GetExistingSkillsForJobs());
@@ -197,7 +201,7 @@ namespace CSharp.oDesk.Analyze
                         
                         item = convert(json);
 
-                        Console.WriteLine("Key '{0}' ok.", key);
+                        Console.WriteLine("{0}: Key '{1}' ok.", DateTime.Now, key);
                     }
                     catch (Exception ex)
                     {
@@ -214,7 +218,7 @@ namespace CSharp.oDesk.Analyze
             }
             catch (Exception ex)
             {
-                var error = string.Format("Key '{0}' failed. {1}", key, ex.Message);
+                var error = string.Format("{0}: Key '{1}' failed. {1}", DateTime.Now, key, ex.Message);
                 Console.WriteLine(error);
                 errors.Add(error);
             }
@@ -247,7 +251,7 @@ namespace CSharp.oDesk.Analyze
                         Debug.Assert(numberOfReturnedJobs == Convert.ToInt32(pagination.GetValue("count").ToString()));
                         Debug.Assert(offset == Convert.ToInt32(pagination.GetValue("offset").ToString()));
 
-                        Console.WriteLine("{0,5} +100 / {1,5}: {2}", offset, pagination.GetValue("total"),key);
+                        Console.WriteLine("{0}: {1,5} +100 / {2,5}: {3}", DateTime.Now, offset, pagination.GetValue("total"), key);
 
                         offset += itemsPerPage;
                     }
@@ -257,16 +261,16 @@ namespace CSharp.oDesk.Analyze
                         {
                             if (ex is oDeskApiException)
                             {
-                                Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", key, ex.Message);
+                                Console.WriteLine("{0}: {1,5} +100 / {2,5}: {3} ({4})", DateTime.Now, offset, "fail", key, ex.Message);
                                 return true;
                             }
-                            Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", key, ex.Message);
+                            Console.WriteLine("{0}: {1,5} +100 / {2,5}: {3} ({4})", DateTime.Now, offset, "fail", key, ex.Message);
                             return false;
                         });
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("{0,5} +100 / {1,5}: {2} ({3})", offset, "fail", key, ex.Message);
+                        Console.WriteLine("{0}: {1,5} +100 / {2,5}: {3} ({4})", DateTime.Now, offset, "fail", key, ex.Message);
                     }
 
                 } while (numberOfReturnedJobs == itemsPerPage);
@@ -277,7 +281,7 @@ namespace CSharp.oDesk.Analyze
             }
             catch (Exception ex)
             {
-                var error = string.Format("Key '{0}' failed. {1}", key, ex.Message);
+                var error = string.Format("{0}: Key '{1' failed. {2}", DateTime.Now, key, ex.Message);
                 Console.WriteLine(error);
                 errors.Add(error);
             }
