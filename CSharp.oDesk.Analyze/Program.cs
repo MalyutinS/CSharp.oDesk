@@ -83,20 +83,20 @@ namespace CSharp.oDesk.Analyze
 
                 Console.WriteLine("{0}: {1} skills to search for a Jobs", DateTime.Now, jobSkills.Count);
 
-                Parallel.ForEach(jobSkills, new ParallelOptions { MaxDegreeOfParallelism = 2 }, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
-                    "/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors, 
-                    job => new Job
-                    {
-                        Id = Guid.NewGuid(),
-                        OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
-                        Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
-                        OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
-                        OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
-                        DateCreated = job.GetValue("date_created").ToDateTime(),
-                        Budjet = job.GetValue("budget").ToInt32(),
-                        ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
-                        Skill = skill
-                    }));
+                //Parallel.ForEach(jobSkills, new ParallelOptions { MaxDegreeOfParallelism = 4 }, skill => GetByMultipleItems(oDesk, "jobs", "dbo.Jobs", skill,
+                //    "/api/profiles/v2/search/jobs.json?skills=<skills>&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors, 
+                //    job => new Job
+                //    {
+                //        Id = Guid.NewGuid(),
+                //        OdeskId = job.GetValue("id").ToStringWithoutQuotes(),
+                //        Title = job.GetValue("title").ToStringWithoutQuotes().Truncate(500),
+                //        OdeskCategory = job.GetValue("category").ToStringWithoutQuotes(),
+                //        OdeskSubcategory = job.GetValue("subcategory").ToStringWithoutQuotes(),
+                //        DateCreated = job.GetValue("date_created").ToDateTime(),
+                //        Budjet = job.GetValue("budget").ToInt32(),
+                //        ClientCountry = job.GetValue("client").GetValue("country").ToStringWithoutQuotes(),
+                //        Skill = skill
+                //    }));
 
                 /* Get Frelancers (Contractors) Skills */
 
@@ -104,18 +104,18 @@ namespace CSharp.oDesk.Analyze
 
                 Console.WriteLine("{0}: {1} skills to search for a Contractors", DateTime.Now, contractorSkills.Count);
 
-                Parallel.ForEach(contractorSkills, new ParallelOptions { MaxDegreeOfParallelism = 2 }, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
-                    "/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&include_entities=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
-                    contractor => new ContractorSkill
-                    {
-                        Id = Guid.NewGuid(),
-                        OdeskId = contractor.ToStringWithoutQuotes(),
-                        Skill = skill
-                    }));
+                //Parallel.ForEach(contractorSkills, new ParallelOptions { MaxDegreeOfParallelism = 4 }, skill => GetByMultipleItems(oDesk, "providers", "dbo.Contractors_Skills", skill,
+                //    "/api/profiles/v2/search/providers.json?skills=<skills>&is_odesk_ready=1&include_entities=1&paging={0};{1}".Replace("<skills>", HttpUtility.UrlEncode(skill)), errors,
+                //    contractor => new ContractorSkill
+                //    {
+                //        Id = Guid.NewGuid(),
+                //        OdeskId = contractor.ToStringWithoutQuotes(),
+                //        Skill = skill
+                //    }));
 
                 /* Get Frelancers (Contractors) Details */
 
-                Parallel.ForEach(GetExistingContractors(),new ParallelOptions { MaxDegreeOfParallelism = 2 }, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
+                Parallel.ForEach(GetExistingContractors(),new ParallelOptions { MaxDegreeOfParallelism = 4 }, contractorId => GetSingleItem(oDesk, "profile", "dbo.Contractors", contractorId,
                     string.Format("/api/profiles/v1/providers/{0}/brief.json", contractorId), errors, 
                     profile => new Contractor
                     {
