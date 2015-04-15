@@ -69,6 +69,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assignment.cs" />
     <Compile Include="Contractor.cs" />
     <Compile Include="ContractorSkill.cs" />
     <Compile Include="Helpers\DataTableHelper.cs" />

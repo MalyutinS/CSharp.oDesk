@@ -12,7 +12,7 @@ namespace CSharp.oDesk.Analyze.Helpers
             {
                 return 0;
             }
-            return Convert.ToDouble(value.ToStringWithoutQuotes(), CultureInfo.InvariantCulture);
+            return Convert.ToDouble(value.ToStringWithoutQuotes().Replace("$", ""), CultureInfo.InvariantCulture);
         }
 
         public static int ToInt32(this JsonValue value)
