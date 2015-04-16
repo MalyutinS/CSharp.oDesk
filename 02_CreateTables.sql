@@ -156,6 +156,7 @@ IF NOT EXISTS ( SELECT  *
 			[ContractorId] VARCHAR(50) NOT NULL , 
 		    [JobType] VARCHAR(50) NOT NULL, 
 			[Rate] [float] NOT NULL, 
+			RecNo VARCHAR(50) NULL, 
             [FromDate] VARCHAR(50) NULL, 
             [ToDate] VARCHAR(50) NULL, 
             [TotalHours] [float] NULL, 

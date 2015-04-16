@@ -16,6 +16,8 @@ namespace CSharp.oDesk.Analyze
 
         public double Rate { get; set; }
 
+        public string RecNo { get; set; }
+
         public string FromDate { get; set; }
 
         public string ToDate { get; set; }
